@@ -25,10 +25,14 @@ _COOKIE_FILE = None
 
 def _resolve_cookies():
     global _COOKIE_FILE
-    # 1) Render Secret File at /etc/secrets/cookies.txt (most reliable)
+    # 1) Render Secret File at /etc/secrets/cookies.txt — copy to /tmp (writable)
     render_secret = "/etc/secrets/cookies.txt"
     if os.path.exists(render_secret):
-        _COOKIE_FILE = render_secret
+        import shutil
+        tmp_copy = "/tmp/yt_cookies.txt"
+        shutil.copy2(render_secret, tmp_copy)
+        os.chmod(tmp_copy, 0o600)
+        _COOKIE_FILE = tmp_copy
         return
     # 2) YT_COOKIES env var (base64 or raw Netscape text)
     env_val = os.environ.get("YT_COOKIES", "").strip()
