@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: onda-music
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: YT_COOKIES
+        sync: false   # set manually in Render dashboard
+    healthCheckPath: /api/health
+    autoDeploy: true
