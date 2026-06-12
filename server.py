@@ -25,11 +25,15 @@ _COOKIE_FILE = None
 
 def _resolve_cookies():
     global _COOKIE_FILE
+    # 1) Render Secret File at /etc/secrets/cookies.txt (most reliable)
+    render_secret = "/etc/secrets/cookies.txt"
+    if os.path.exists(render_secret):
+        _COOKIE_FILE = render_secret
+        return
+    # 2) YT_COOKIES env var (base64 or raw Netscape text)
     env_val = os.environ.get("YT_COOKIES", "").strip()
     if env_val:
-        # Write env var content to a temp file
         tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
-        # Support base64-encoded cookies
         if not env_val.startswith("# Netscape"):
             import base64
             try:
@@ -40,10 +44,11 @@ def _resolve_cookies():
         tmp.flush()
         tmp.close()
         _COOKIE_FILE = tmp.name
-    else:
-        local = os.path.join(BASE_DIR, "cookies.txt")
-        if os.path.exists(local):
-            _COOKIE_FILE = local
+        return
+    # 3) Local cookies.txt (dev environment)
+    local = os.path.join(BASE_DIR, "cookies.txt")
+    if os.path.exists(local):
+        _COOKIE_FILE = local
 
 _resolve_cookies()
 
