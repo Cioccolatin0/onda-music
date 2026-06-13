@@ -1,542 +1,357 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="Onda"/>
-<meta name="theme-color" content="#0b0614"/>
-<link rel="manifest" href="/manifest.json"/>
-<link rel="apple-touch-icon" href="/static/icons/icon-180.png"/>
-<title>Onda Music</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
-  --bg:#0b0614;--bg2:#130d22;--bg3:#1e1535;--card:#1a1230;
-  --accent:#c026d3;--accent2:#ec4899;--text:#f1f0f5;--muted:#8b7fa8;
-  --radius:14px;--player-h:80px;
-}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
-#app{display:flex;flex-direction:column;height:100%;height:100dvh}
-/* ── Topbar ── */
-#topbar{display:flex;align-items:center;gap:10px;padding:env(safe-area-inset-top,12px) 16px 10px;background:var(--bg);z-index:10;flex-shrink:0}
-#logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;flex-shrink:0}
-#search-wrap{flex:1;position:relative}
-#search-input{width:100%;background:var(--bg3);border:none;border-radius:24px;padding:9px 16px 9px 38px;color:var(--text);font-size:15px;outline:none}
-#search-input::placeholder{color:var(--muted)}
-.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
-#clear-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;display:none}
-#suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border-radius:12px;z-index:100;overflow:hidden;box-shadow:0 8px 32px #0008;display:none}
-.sug-item{padding:11px 16px;cursor:pointer;font-size:14px;color:var(--text)}
-.sug-item:hover{background:var(--bg3)}
-/* ── Tabs ── */
-#tabs{display:flex;gap:6px;padding:0 16px 10px;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
-#tabs::-webkit-scrollbar{display:none}
-.tab{padding:6px 16px;border-radius:20px;background:var(--bg3);border:none;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
-/* ── Scroll area ── */
-#scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 0 calc(var(--player-h) + env(safe-area-inset-bottom,0px) + 16px);scrollbar-width:thin;scrollbar-color:var(--bg3) transparent}
-/* ── Sections ── */
-.section{margin:0 0 24px}
-.section-title{font-size:17px;font-weight:700;padding:0 16px 10px;color:var(--text)}
-/* horizontal scroll rows */
-.hscroll{display:flex;gap:12px;padding:0 16px;overflow-x:auto;scrollbar-width:none}
-.hscroll::-webkit-scrollbar{display:none}
-/* vertical list */
-.vlist{display:flex;flex-direction:column;gap:2px;padding:0 8px}
-/* ── Cards ── */
-.card-sq{flex-shrink:0;width:140px;cursor:pointer}
-.card-sq img{width:140px;height:140px;border-radius:var(--radius);object-fit:cover;background:var(--bg3)}
-.card-sq .ct{font-size:13px;font-weight:600;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card-sq .cs{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-/* artist circle */
-.card-art{flex-shrink:0;width:110px;cursor:pointer;text-align:center}
-.card-art img{width:110px;height:110px;border-radius:50%;object-fit:cover;background:var(--bg3)}
-.card-art .ct{font-size:12px;font-weight:600;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* song row */
-.song-row{display:flex;align-items:center;gap:12px;padding:8px 8px;border-radius:10px;cursor:pointer;transition:background .15s}
-.song-row:hover,.song-row:active{background:var(--bg3)}
-.song-row.playing{background:var(--bg3)}
-.song-row img{width:48px;height:48px;border-radius:8px;object-fit:cover;background:var(--bg3);flex-shrink:0}
-.song-row .si{flex:1;min-width:0}
-.song-row .st{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.song-row .sa{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.song-row .sd{font-size:12px;color:var(--muted);flex-shrink:0}
-.song-row .play-ind{width:18px;flex-shrink:0;text-align:center;color:var(--accent)}
-/* ── Player ── */
-#player{position:fixed;bottom:0;left:0;right:0;height:calc(var(--player-h) + env(safe-area-inset-bottom,0px));background:var(--bg2);border-top:1px solid var(--bg3);display:flex;flex-direction:column;z-index:50;padding-bottom:env(safe-area-inset-bottom,0px)}
-#player.hidden{display:none}
-#progress-bar{width:100%;height:3px;background:var(--bg3);cursor:pointer;flex-shrink:0}
-#progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .5s linear;pointer-events:none}
-#player-inner{display:flex;align-items:center;gap:12px;padding:0 16px;flex:1}
-#player-thumb{width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--bg3);flex-shrink:0}
-#player-info{flex:1;min-width:0}
-#player-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#player-artist{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-#player-controls{display:flex;align-items:center;gap:6px}
-.ctrl-btn{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:6px;border-radius:50%;transition:background .15s;display:flex;align-items:center;justify-content:center}
-.ctrl-btn:active{background:var(--bg3)}
-#play-btn{font-size:28px;color:var(--accent)}
-/* ── Detail views ── */
-#detail{position:fixed;inset:0;background:var(--bg);z-index:40;display:none;flex-direction:column;overflow-y:auto}
-#detail.open{display:flex}
-#detail-header{display:flex;align-items:center;gap:12px;padding:env(safe-area-inset-top,16px) 16px 12px;background:var(--bg);position:sticky;top:0;z-index:5}
-#back-btn{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px}
-#detail-title{font-size:17px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#detail-hero{padding:0 16px 16px;display:flex;gap:16px;align-items:flex-end}
-#detail-hero img{width:130px;height:130px;border-radius:var(--radius);object-fit:cover;background:var(--bg3);flex-shrink:0}
-#detail-meta{flex:1;min-width:0}
-#detail-meta h2{font-size:20px;font-weight:800;margin-bottom:4px}
-#detail-meta p{font-size:13px;color:var(--muted);margin-bottom:8px}
-#detail-play-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;padding:10px 24px;border-radius:24px;font-size:14px;font-weight:700;cursor:pointer}
-#detail-tracks{padding:0 8px 100px}
-/* ── Spinner ── */
-.spinner{width:36px;height:36px;border:3px solid var(--bg3);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
-@keyframes spin{to{transform:rotate(360deg)}}
-/* ── Empty ── */
-.empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:15px}
-/* ── Scrollbar ── */
-#scroll::-webkit-scrollbar{width:4px}
-#scroll::-webkit-scrollbar-track{background:transparent}
-#scroll::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Onda">
+    <title>Onda Music — Streaming Premium</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #7c3aed;
+            --primary-light: #a78bfa;
+            --primary-dark: #6d28d9;
+            --bg: #0f0f0f;
+            --bg2: #1a1a1a;
+            --bg3: #2a2a2a;
+            --text: #fff;
+            --text-muted: #b0b0b0;
+            --border: rgba(255,255,255,0.1);
+            --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        html, body { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+        #app { display: flex; flex-direction: column; height: 100vh; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: linear-gradient(180deg, rgba(15,15,15,0.9) 0%, rgba(15,15,15,0.4) 100%); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); z-index: 100; }
+        .logo { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .color-picker-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border); background: var(--primary); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; }
+        .color-picker-btn:hover { transform: scale(1.05); border-color: var(--primary-light); }
+        .color-picker-input { display: none; }
+        .main { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 280px; background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; padding: 20px 0; display: flex; flex-direction: column; }
+        .sidebar-section { padding: 0 16px; margin-bottom: 24px; }
+        .sidebar-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 12px; opacity: 0.6; }
+        .sidebar-item { padding: 12px 16px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: var(--transition); font-size: 14px; color: var(--text-muted); display: flex; align-items: center; gap: 12px; }
+        .sidebar-item:hover { background: rgba(124,58,237,0.1); color: var(--text); }
+        .sidebar-item.active { background: linear-gradient(90deg, var(--primary) 0%, rgba(124,58,237,0.2) 100%); color: var(--text); font-weight: 600; }
+        .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .search-bar { padding: 20px 24px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(26,26,26,0.8) 0%, rgba(26,26,26,0.4) 100%); backdrop-filter: blur(10px); }
+        .search-input { width: 100%; padding: 12px 16px; border-radius: 24px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); font-size: 14px; transition: var(--transition); outline: none; }
+        .search-input:focus { background: rgba(124,58,237,0.1); border-color: var(--primary); box-shadow: 0 0 20px rgba(124,58,237,0.2); }
+        .search-input::placeholder { color: var(--text-muted); }
+        .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg2); border: 1px solid var(--border); border-top: none; border-radius: 0 0 12px 12px; max-height: 300px; overflow-y: auto; z-index: 50; display: none; }
+        .suggestions.active { display: block; }
+        .suggestion-item { padding: 12px 16px; cursor: pointer; transition: var(--transition); border-bottom: 1px solid var(--border); font-size: 13px; }
+        .suggestion-item:hover { background: rgba(124,58,237,0.1); }
+        .scroll-area { flex: 1; overflow-y: auto; padding: 24px; }
+        .section { margin-bottom: 48px; }
+        .section-title { font-size: 24px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.5px; }
+        .section-subtitle { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; opacity: 0.6; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+        .grid.wide { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+        .card { background: linear-gradient(135deg, rgba(124,58,237,0.1) 0%, rgba(124,58,237,0.05) 100%); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: var(--transition); display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
+        .card:hover { background: linear-gradient(135deg, rgba(124,58,237,0.2) 0%, rgba(124,58,237,0.1) 100%); border-color: var(--primary); transform: translateY(-4px); }
+        .card-image { width: 100%; aspect-ratio: 1; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 48px; overflow: hidden; }
+        .card-image img { width: 100%; height: 100%; object-fit: cover; }
+        .card-title { font-size: 14px; font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-subtitle { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player { background: linear-gradient(180deg, rgba(26,26,26,0.95) 0%, rgba(15,15,15,0.95) 100%); backdrop-filter: blur(20px); border-top: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 16px; z-index: 200; }
+        .player-info { flex: 1; min-width: 0; }
+        .player-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-artist { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .player-controls { display: flex; align-items: center; gap: 12px; }
+        .player-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(124,58,237,0.2); border: 1px solid var(--border); color: var(--text); cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .player-btn:hover { background: var(--primary); border-color: var(--primary); transform: scale(1.05); }
+        .player-btn.play { width: 48px; height: 48px; background: var(--primary); border-color: var(--primary); }
+        .player-progress { flex: 1; display: flex; align-items: center; gap: 8px; }
+        .progress-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; cursor: pointer; position: relative; }
+        .progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.1s linear; }
+        .time-label { font-size: 12px; color: var(--text-muted); min-width: 40px; text-align: right; }
+        .loading { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 14px; padding: 40px; }
+        .loading-dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; animation: pulse 1.4s infinite; }
+        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 40px; text-align: center; color: var(--text-muted); }
+        .empty-state-icon { font-size: 64px; opacity: 0.3; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-light); }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .header { padding: 12px 16px; }
+            .scroll-area { padding: 16px; }
+            .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+            .player { flex-wrap: wrap; padding: 12px 16px; }
+            .player-info { flex: 1 0 100%; }
+            .player-controls { flex: 1; justify-content: space-between; }
+            .player-progress { flex: 1 0 100%; margin-top: 8px; }
+        }
+    </style>
 </head>
 <body>
-<div id="app">
-  <div id="topbar">
-    <div id="logo">Onda</div>
-    <div id="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input id="search-input" type="search" placeholder="Cerca brani, album, artisti…" autocomplete="off" autocorrect="off" spellcheck="false"/>
-      <button id="clear-btn">✕</button>
-      <div id="suggestions"></div>
+    <div id="app">
+        <div class="header">
+            <div class="logo">🎵 Onda</div>
+            <button class="color-picker-btn" id="colorPickerBtn">
+                <input type="color" id="colorPicker" class="color-picker-input" value="#7c3aed">
+            </button>
+        </div>
+        <div class="main">
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Menu</div>
+                    <div class="sidebar-item active" data-view="home">🏠 Home</div>
+                    <div class="sidebar-item" data-view="search">🔍 Ricerca</div>
+                </div>
+            </div>
+            <div class="content">
+                <div class="search-bar" id="searchBar" style="display: none;">
+                    <div style="position: relative;">
+                        <input type="text" class="search-input" id="searchInput" placeholder="Cerca brani, album, artisti...">
+                        <div class="suggestions" id="suggestionsDropdown"></div>
+                    </div>
+                </div>
+                <div class="scroll-area" id="scrollArea"></div>
+            </div>
+        </div>
+        <div class="player">
+            <div class="player-info">
+                <div class="player-title" id="playerTitle">Seleziona un brano</div>
+                <div class="player-artist" id="playerArtist">Onda Music</div>
+            </div>
+            <div class="player-progress">
+                <span class="time-label" id="currentTime">0:00</span>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="time-label" id="duration">0:00</span>
+            </div>
+            <div class="player-controls">
+                <button class="player-btn" id="prevBtn">⏮</button>
+                <button class="player-btn play" id="playBtn">▶</button>
+                <button class="player-btn" id="nextBtn">⏭</button>
+            </div>
+        </div>
     </div>
-  </div>
-  <div id="tabs">
-    <button class="tab active" data-tab="all">Tutto</button>
-    <button class="tab" data-tab="songs">Brani</button>
-    <button class="tab" data-tab="albums">Album</button>
-    <button class="tab" data-tab="artists">Artisti</button>
-  </div>
-  <div id="scroll">
-    <div id="main-content"></div>
-  </div>
-</div>
+    <audio id="audioPlayer"></audio>
+    <script>
+        let state = { currentTrack: null, isPlaying: false, queue: [], queueIndex: 0, currentView: 'home', primaryColor: '#7c3aed' };
+        const app = document.getElementById('app');
+        const scrollArea = document.getElementById('scrollArea');
+        const searchBar = document.getElementById('searchBar');
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsDropdown = document.getElementById('suggestionsDropdown');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playerTitle = document.getElementById('playerTitle');
+        const playerArtist = document.getElementById('playerArtist');
+        const playBtn = document.getElementById('playBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const currentTimeLabel = document.getElementById('currentTime');
+        const durationLabel = document.getElementById('duration');
+        const colorPicker = document.getElementById('colorPicker');
+        const colorPickerBtn = document.getElementById('colorPickerBtn');
 
-<!-- Detail overlay -->
-<div id="detail">
-  <div id="detail-header">
-    <button id="back-btn">‹</button>
-    <span id="detail-title"></span>
-  </div>
-  <div id="detail-hero">
-    <img id="detail-img" src="" alt=""/>
-    <div id="detail-meta">
-      <h2 id="detail-name"></h2>
-      <p id="detail-sub"></p>
-      <button id="detail-play-btn">▶ Riproduci tutto</button>
-    </div>
-  </div>
-  <div id="detail-tracks"></div>
-</div>
+        colorPickerBtn.addEventListener('click', () => colorPicker.click());
+        colorPicker.addEventListener('change', (e) => {
+            state.primaryColor = e.target.value;
+            document.documentElement.style.setProperty('--primary', state.primaryColor);
+            document.documentElement.style.setProperty('--primary-light', lightenColor(state.primaryColor, 30));
+            document.documentElement.style.setProperty('--primary-dark', darkenColor(state.primaryColor, 30));
+            localStorage.setItem('primaryColor', state.primaryColor);
+        });
 
-<!-- Player -->
-<div id="player" class="hidden">
-  <div id="progress-bar"><div id="progress-fill"></div></div>
-  <div id="player-inner">
-    <img id="player-thumb" src="" alt=""/>
-    <div id="player-info">
-      <div id="player-title">—</div>
-      <div id="player-artist">—</div>
-    </div>
-    <div id="player-controls">
-      <button class="ctrl-btn" id="prev-btn">⏮</button>
-      <button class="ctrl-btn" id="play-btn">▶</button>
-      <button class="ctrl-btn" id="next-btn">⏭</button>
-    </div>
-  </div>
-</div>
+        function lightenColor(hex, percent) {
+            const num = parseInt(hex.replace("#", ""), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, (num >> 16) + amt);
+            const G = Math.min(255, (num >> 8 & 0x00FF) + amt);
+            const B = Math.min(255, (num & 0x0000FF) + amt);
+            return "#" + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
 
-<audio id="audio" preload="none"></audio>
+        function darkenColor(hex, percent) {
+            const num = parseInt(hex.replace("#", ""), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.max(0, (num >> 16) - amt);
+            const G = Math.max(0, (num >> 8 & 0x00FF) - amt);
+            const B = Math.max(0, (num & 0x0000FF) - amt);
+            return "#" + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
 
-<script>
-// ── State ──────────────────────────────────────────────────────────────────
-const state = {
-  tab: 'all',
-  query: '',
-  queue: [],      // [{videoId, title, artists, thumbnail, album}]
-  queueIdx: -1,
-  playing: false,
-  homeData: null,
-};
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
 
-// ── DOM refs ──────────────────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-const audio = $('audio');
-const playerEl = $('player');
-const playBtn = $('play-btn');
-const progressFill = $('progress-fill');
-const mainContent = $('main-content');
-const searchInput = $('search-input');
-const clearBtn = $('clear-btn');
-const suggestionsEl = $('suggestions');
-const detailEl = $('detail');
+        async function fetchAPI(endpoint) {
+            try {
+                const response = await fetch(`/api${endpoint}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`API Error: ${endpoint}`, error);
+                return null;
+            }
+        }
 
-// ── API helpers ────────────────────────────────────────────────────────────
-async function api(path) {
-  const r = await fetch(path);
-  if (!r.ok) throw new Error(r.status);
-  return r.json();
-}
+        async function renderHome() {
+            scrollArea.innerHTML = '<div class="loading"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>';
+            const data = await fetchAPI('/home');
+            if (!data) {
+                scrollArea.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎵</div><p>Errore nel caricamento</p></div>';
+                return;
+            }
+            let html = '';
+            if (data.trending && data.trending.length > 0) {
+                html += `<div class="section"><div class="section-subtitle">Tendenze Oggi</div><div class="grid wide">`;
+                data.trending.slice(0, 6).forEach(track => {
+                    html += `<div class="card" onclick="playTrack('${track.videoId}', '${track.title.replace(/'/g, "\\'")}', '${track.artists?.[0]?.name?.replace(/'/g, "\\'") || 'Artista'}')"><div class="card-image">${track.thumbnail ? `<img src="${track.thumbnail}" alt="">` : '🎵'}</div><div class="card-title">${track.title}</div><div class="card-subtitle">${track.artists?.[0]?.name || 'Artista'}</div></div>`;
+                });
+                html += '</div></div>';
+            }
+            if (data.new_releases && data.new_releases.length > 0) {
+                html += `<div class="section"><div class="section-subtitle">Nuove Uscite</div><div class="grid wide">`;
+                data.new_releases.slice(0, 6).forEach(album => {
+                    html += `<div class="card"><div class="card-image">${album.thumbnails?.[0]?.url ? `<img src="${album.thumbnails[0].url}" alt="">` : '💿'}</div><div class="card-title">${album.title}</div><div class="card-subtitle">${album.subtitle || 'Album'}</div></div>`;
+                });
+                html += '</div></div>';
+            }
+            scrollArea.innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">🎵</div><p>Nessun contenuto disponibile</p></div>';
+        }
 
-function streamUrl(videoId) {
-  return `/api/stream/${videoId}`;
-}
+        async function renderSearch(query) {
+            if (!query) {
+                scrollArea.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><p>Inizia a cercare</p></div>';
+                return;
+            }
+            scrollArea.innerHTML = '<div class="loading"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>';
+            const data = await fetchAPI(`/search?q=${encodeURIComponent(query)}&type=all`);
+            if (!data) {
+                scrollArea.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><p>Nessun risultato</p></div>';
+                return;
+            }
+            let html = '';
+            if (data.songs && data.songs.length > 0) {
+                html += `<div class="section"><div class="section-title">Brani</div><div class="grid">`;
+                data.songs.slice(0, 12).forEach(track => {
+                    html += `<div class="card" onclick="playTrack('${track.videoId}', '${track.title.replace(/'/g, "\\'")}', '${track.artists?.[0]?.name?.replace(/'/g, "\\'") || 'Artista'}')"><div class="card-image">${track.thumbnail ? `<img src="${track.thumbnail}" alt="">` : '🎵'}</div><div class="card-title">${track.title}</div><div class="card-subtitle">${track.artists?.[0]?.name || 'Artista'}</div></div>`;
+                });
+                html += '</div></div>';
+            }
+            if (data.albums && data.albums.length > 0) {
+                html += `<div class="section"><div class="section-title">Album</div><div class="grid">`;
+                data.albums.slice(0, 12).forEach(album => {
+                    html += `<div class="card"><div class="card-image">${album.thumbnails?.[0]?.url ? `<img src="${album.thumbnails[0].url}" alt="">` : '💿'}</div><div class="card-title">${album.title}</div><div class="card-subtitle">${album.subtitle || 'Album'}</div></div>`;
+                });
+                html += '</div></div>';
+            }
+            if (data.artists && data.artists.length > 0) {
+                html += `<div class="section"><div class="section-title">Artisti</div><div class="grid">`;
+                data.artists.slice(0, 12).forEach(artist => {
+                    html += `<div class="card"><div class="card-image">${artist.thumbnails?.[0]?.url ? `<img src="${artist.thumbnails[0].url}" alt="">` : '👤'}</div><div class="card-title">${artist.name}</div><div class="card-subtitle">Artista</div></div>`;
+                });
+                html += '</div></div>';
+            }
+            scrollArea.innerHTML = html || '<div class="empty-state"><div class="empty-state-icon">❌</div><p>Nessun risultato</p></div>';
+        }
 
-// ── Render helpers ─────────────────────────────────────────────────────────
-function img(src, cls) {
-  return `<img src="${src || ''}" class="${cls}" onerror="this.src=''" loading="lazy"/>`;
-}
-function artistNames(artists) {
-  return (artists || []).map(a => a.name).filter(Boolean).join(', ') || 'Artista sconosciuto';
-}
-function esc(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+        async function playTrack(videoId, title, artist) {
+            state.currentTrack = { videoId, title, artist };
+            playerTitle.textContent = title;
+            playerArtist.textContent = artist;
+            playBtn.textContent = '⏸';
+            state.isPlaying = true;
+            const streamData = await fetchAPI(`/stream/${videoId}`);
+            if (streamData && streamData.url) {
+                audioPlayer.src = streamData.url;
+                audioPlayer.play();
+            } else {
+                alert('Errore nel caricamento del brano');
+                state.isPlaying = false;
+                playBtn.textContent = '▶';
+            }
+        }
 
-// ── Song row ──────────────────────────────────────────────────────────────
-function songRowHtml(track, idx, queue) {
-  const isCurrent = state.queue.length && state.queue[state.queueIdx]?.videoId === track.videoId;
-  return `<div class="song-row${isCurrent ? ' playing' : ''}" data-idx="${idx}" data-queue="${encodeURIComponent(JSON.stringify(queue))}">
-    ${img(track.thumbnail, '')}
-    <div class="si">
-      <div class="st">${esc(track.title)}</div>
-      <div class="sa">${esc(artistNames(track.artists))}</div>
-    </div>
-    <div class="sd">${esc(track.duration || '')}</div>
-    <div class="play-ind">${isCurrent && state.playing ? '▶' : ''}</div>
-  </div>`;
-}
+        playBtn.addEventListener('click', () => {
+            if (!state.currentTrack) return;
+            if (state.isPlaying) {
+                audioPlayer.pause();
+                playBtn.textContent = '▶';
+                state.isPlaying = false;
+            } else {
+                audioPlayer.play();
+                playBtn.textContent = '⏸';
+                state.isPlaying = true;
+            }
+        });
 
-// ── Album card ────────────────────────────────────────────────────────────
-function albumCardHtml(album) {
-  return `<div class="card-sq" data-browse="${esc(album.browseId)}" data-type="album">
-    ${img(album.thumbnail, '')}
-    <div class="ct">${esc(album.title)}</div>
-    <div class="cs">${esc(artistNames(album.artists))}</div>
-  </div>`;
-}
+        audioPlayer.addEventListener('timeupdate', () => {
+            const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressFill.style.width = `${percent}%`;
+            currentTimeLabel.textContent = formatTime(audioPlayer.currentTime);
+            durationLabel.textContent = formatTime(audioPlayer.duration);
+        });
 
-// ── Artist card ───────────────────────────────────────────────────────────
-function artistCardHtml(artist) {
-  return `<div class="card-art" data-browse="${esc(artist.browseId)}" data-type="artist">
-    ${img(artist.thumbnail, '')}
-    <div class="ct">${esc(artist.name)}</div>
-  </div>`;
-}
+        progressBar.addEventListener('click', (e) => {
+            const rect = progressBar.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            audioPlayer.currentTime = percent * audioPlayer.duration;
+        });
 
-// ── Home ──────────────────────────────────────────────────────────────────
-async function renderHome() {
-  mainContent.innerHTML = '<div class="spinner"></div>';
-  try {
-    const data = state.homeData || await api('/api/home');
-    state.homeData = data;
-    let html = '';
-    for (const sec of data.sections || []) {
-      if (!sec.items?.length) continue;
-      html += `<div class="section"><div class="section-title">${esc(sec.title)}</div>`;
-      if (sec.kind === 'artists') {
-        html += '<div class="hscroll">' + sec.items.map(artistCardHtml).join('') + '</div>';
-      } else if (sec.kind === 'albums') {
-        html += '<div class="hscroll">' + sec.items.map(albumCardHtml).join('') + '</div>';
-      } else {
-        // songs
-        const queue = sec.items.filter(t => t.videoId);
-        html += '<div class="vlist">' + queue.map((t, i) => songRowHtml(t, i, queue)).join('') + '</div>';
-      }
-      html += '</div>';
-    }
-    mainContent.innerHTML = html || '<div class="empty">Nessun contenuto disponibile</div>';
-  } catch(e) {
-    mainContent.innerHTML = `<div class="empty">Errore nel caricamento della home.<br><small>${e.message}</small></div>`;
-  }
-}
+        searchInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            if (query.length > 0) {
+                const suggestions = await fetchAPI(`/suggestions?q=${encodeURIComponent(query)}`);
+                if (suggestions && suggestions.suggestions) {
+                    suggestionsDropdown.innerHTML = suggestions.suggestions.slice(0, 5).map(s => 
+                        `<div class="suggestion-item" onclick="searchAndRender('${s.replace(/'/g, "\\'")}')">${s}</div>`
+                    ).join('');
+                    suggestionsDropdown.classList.add('active');
+                }
+            } else {
+                suggestionsDropdown.classList.remove('active');
+            }
+        });
 
-// ── Search ────────────────────────────────────────────────────────────────
-let searchTimer = null;
-async function doSearch(q, tab) {
-  if (!q.trim()) { renderHome(); return; }
-  mainContent.innerHTML = '<div class="spinner"></div>';
-  try {
-    const data = await api(`/api/search?q=${encodeURIComponent(q)}&type=${tab}`);
-    renderSearchResults(data, tab);
-  } catch(e) {
-    mainContent.innerHTML = `<div class="empty">Errore: ${e.message}</div>`;
-  }
-}
+        function searchAndRender(query) {
+            searchInput.value = query;
+            suggestionsDropdown.classList.remove('active');
+            renderSearch(query);
+        }
 
-function renderSearchResults(data, tab) {
-  const { songs = [], albums = [], artists = [] } = data;
-  let html = '';
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                const view = item.dataset.view;
+                if (view === 'home') {
+                    searchBar.style.display = 'none';
+                    renderHome();
+                } else if (view === 'search') {
+                    searchBar.style.display = 'block';
+                    searchInput.focus();
+                }
+            });
+        });
 
-  if (tab === 'all' || tab === 'songs') {
-    if (songs.length) {
-      html += `<div class="section"><div class="section-title">Brani</div><div class="vlist">`;
-      html += songs.map((t, i) => songRowHtml(t, i, songs)).join('');
-      html += '</div></div>';
-    }
-  }
-  if (tab === 'all' || tab === 'albums') {
-    if (albums.length) {
-      html += `<div class="section"><div class="section-title">Album</div><div class="hscroll">`;
-      html += albums.map(albumCardHtml).join('');
-      html += '</div></div>';
-    }
-  }
-  if (tab === 'all' || tab === 'artists') {
-    if (artists.length) {
-      html += `<div class="section"><div class="section-title">Artisti</div><div class="hscroll">`;
-      html += artists.map(artistCardHtml).join('');
-      html += '</div></div>';
-    }
-  }
-  mainContent.innerHTML = html || '<div class="empty">Nessun risultato trovato.</div>';
-}
+        const savedColor = localStorage.getItem('primaryColor');
+        if (savedColor) {
+            colorPicker.value = savedColor;
+            colorPicker.dispatchEvent(new Event('change'));
+        }
 
-// ── Suggestions ───────────────────────────────────────────────────────────
-let sugTimer = null;
-async function loadSuggestions(q) {
-  if (!q.trim()) { hideSuggestions(); return; }
-  try {
-    const d = await api(`/api/suggestions?q=${encodeURIComponent(q)}`);
-    if (!d.suggestions?.length) { hideSuggestions(); return; }
-    suggestionsEl.innerHTML = d.suggestions.map(s =>
-      `<div class="sug-item">${esc(s)}</div>`
-    ).join('');
-    suggestionsEl.style.display = 'block';
-  } catch { hideSuggestions(); }
-}
-function hideSuggestions() {
-  suggestionsEl.style.display = 'none';
-  suggestionsEl.innerHTML = '';
-}
-
-// ── Detail view ───────────────────────────────────────────────────────────
-async function openAlbum(browseId) {
-  detailEl.classList.add('open');
-  $('detail-tracks').innerHTML = '<div class="spinner"></div>';
-  $('detail-name').textContent = '…';
-  $('detail-sub').textContent = '';
-  $('detail-img').src = '';
-  try {
-    const d = await api(`/api/album/${browseId}`);
-    $('detail-title').textContent = d.title;
-    $('detail-name').textContent = d.title;
-    $('detail-sub').textContent = `${artistNames(d.artists)}${d.year ? ' · ' + d.year : ''}${d.trackCount ? ' · ' + d.trackCount + ' brani' : ''}`;
-    $('detail-img').src = d.thumbnail || '';
-    const tracks = d.tracks || [];
-    $('detail-tracks').innerHTML = '<div class="vlist">' +
-      tracks.map((t, i) => songRowHtml(t, i, tracks)).join('') +
-      '</div>';
-    $('detail-play-btn').onclick = () => { if (tracks.length) playQueue(tracks, 0); };
-  } catch(e) {
-    $('detail-tracks').innerHTML = `<div class="empty">Errore: ${e.message}</div>`;
-  }
-}
-
-async function openArtist(browseId) {
-  detailEl.classList.add('open');
-  $('detail-tracks').innerHTML = '<div class="spinner"></div>';
-  $('detail-name').textContent = '…';
-  $('detail-sub').textContent = '';
-  $('detail-img').src = '';
-  try {
-    const d = await api(`/api/artist/${browseId}`);
-    $('detail-title').textContent = d.name;
-    $('detail-name').textContent = d.name;
-    $('detail-sub').textContent = d.subscribers ? d.subscribers + ' iscritti' : '';
-    $('detail-img').src = d.thumbnail || '';
-
-    let html = '';
-    if (d.songs?.length) {
-      html += `<div class="section"><div class="section-title">Brani popolari</div><div class="vlist">`;
-      html += d.songs.map((t, i) => songRowHtml(t, i, d.songs)).join('');
-      html += '</div></div>';
-    }
-    if (d.albums?.length) {
-      html += `<div class="section"><div class="section-title">Album</div><div class="hscroll">`;
-      html += d.albums.map(albumCardHtml).join('');
-      html += '</div></div>';
-    }
-    if (d.singles?.length) {
-      html += `<div class="section"><div class="section-title">Singoli</div><div class="hscroll">`;
-      html += d.singles.map(albumCardHtml).join('');
-      html += '</div></div>';
-    }
-    $('detail-tracks').innerHTML = html || '<div class="empty">Nessun contenuto</div>';
-    $('detail-play-btn').onclick = () => { if (d.songs?.length) playQueue(d.songs, 0); };
-  } catch(e) {
-    $('detail-tracks').innerHTML = `<div class="empty">Errore: ${e.message}</div>`;
-  }
-}
-
-// ── Player ────────────────────────────────────────────────────────────────
-function playQueue(queue, idx) {
-  state.queue = queue;
-  state.queueIdx = idx;
-  playTrack(queue[idx]);
-}
-
-function playTrack(track) {
-  if (!track?.videoId) return;
-  $('player-title').textContent = track.title || '—';
-  $('player-artist').textContent = artistNames(track.artists);
-  $('player-thumb').src = track.thumbnail || '';
-  playerEl.classList.remove('hidden');
-  audio.src = streamUrl(track.videoId);
-  audio.load();
-  audio.play().catch(() => {});
-  state.playing = true;
-  updatePlayBtn();
-  highlightCurrentRow();
-}
-
-function updatePlayBtn() {
-  playBtn.textContent = state.playing ? '⏸' : '▶';
-}
-
-function highlightCurrentRow() {
-  document.querySelectorAll('.song-row').forEach(r => r.classList.remove('playing'));
-  const cur = state.queue[state.queueIdx];
-  if (!cur) return;
-  document.querySelectorAll('.song-row').forEach(r => {
-    try {
-      const q = JSON.parse(decodeURIComponent(r.dataset.queue || '[]'));
-      const idx = parseInt(r.dataset.idx);
-      if (q[idx]?.videoId === cur.videoId) r.classList.add('playing');
-    } catch {}
-  });
-}
-
-// Progress
-audio.addEventListener('timeupdate', () => {
-  if (!audio.duration) return;
-  progressFill.style.width = (audio.currentTime / audio.duration * 100) + '%';
-});
-$('progress-bar').addEventListener('click', e => {
-  if (!audio.duration) return;
-  const pct = e.offsetX / e.currentTarget.offsetWidth;
-  audio.currentTime = pct * audio.duration;
-});
-
-// Auto next
-audio.addEventListener('ended', () => {
-  const next = state.queueIdx + 1;
-  if (next < state.queue.length) { state.queueIdx = next; playTrack(state.queue[next]); }
-  else { state.playing = false; updatePlayBtn(); }
-});
-audio.addEventListener('play', () => { state.playing = true; updatePlayBtn(); });
-audio.addEventListener('pause', () => { state.playing = false; updatePlayBtn(); });
-
-playBtn.addEventListener('click', () => {
-  if (audio.paused) audio.play();
-  else audio.pause();
-});
-$('prev-btn').addEventListener('click', () => {
-  if (audio.currentTime > 3) { audio.currentTime = 0; return; }
-  const prev = state.queueIdx - 1;
-  if (prev >= 0) { state.queueIdx = prev; playTrack(state.queue[prev]); }
-});
-$('next-btn').addEventListener('click', () => {
-  const next = state.queueIdx + 1;
-  if (next < state.queue.length) { state.queueIdx = next; playTrack(state.queue[next]); }
-});
-
-// ── Event delegation ──────────────────────────────────────────────────────
-function handleClick(e) {
-  // song row
-  const row = e.target.closest('.song-row');
-  if (row) {
-    try {
-      const queue = JSON.parse(decodeURIComponent(row.dataset.queue));
-      const idx = parseInt(row.dataset.idx);
-      playQueue(queue, idx);
-    } catch {}
-    return;
-  }
-  // album card
-  const albumCard = e.target.closest('[data-type="album"]');
-  if (albumCard) { openAlbum(albumCard.dataset.browse); return; }
-  // artist card
-  const artistCard = e.target.closest('[data-type="artist"]');
-  if (artistCard) { openArtist(artistCard.dataset.browse); return; }
-}
-
-mainContent.addEventListener('click', handleClick);
-detailEl.addEventListener('click', handleClick);
-
-$('back-btn').addEventListener('click', () => {
-  detailEl.classList.remove('open');
-});
-
-// ── Search events ─────────────────────────────────────────────────────────
-searchInput.addEventListener('input', () => {
-  const q = searchInput.value.trim();
-  clearBtn.style.display = q ? 'block' : 'none';
-  state.query = q;
-  clearTimeout(sugTimer);
-  sugTimer = setTimeout(() => loadSuggestions(q), 300);
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => doSearch(q, state.tab), 600);
-});
-
-searchInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    hideSuggestions();
-    clearTimeout(searchTimer);
-    doSearch(state.query, state.tab);
-  }
-});
-
-clearBtn.addEventListener('click', () => {
-  searchInput.value = '';
-  clearBtn.style.display = 'none';
-  state.query = '';
-  hideSuggestions();
-  renderHome();
-});
-
-suggestionsEl.addEventListener('click', e => {
-  const item = e.target.closest('.sug-item');
-  if (!item) return;
-  const q = item.textContent;
-  searchInput.value = q;
-  state.query = q;
-  hideSuggestions();
-  doSearch(q, state.tab);
-});
-
-document.addEventListener('click', e => {
-  if (!e.target.closest('#search-wrap')) hideSuggestions();
-});
-
-// ── Tabs ──────────────────────────────────────────────────────────────────
-document.querySelectorAll('.tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.tab = btn.dataset.tab;
-    if (state.query) doSearch(state.query, state.tab);
-    else renderHome();
-  });
-});
-
-// ── Init ──────────────────────────────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
-}
-renderHome();
-</script>
+        renderHome();
+    </script>
 </body>
 </html>
